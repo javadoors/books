@@ -3,4 +3,5 @@
 ```
 pip install pypdf2
 pip install PyPDF2 googletrans
+pip install pymupdf googletrans
 ```
