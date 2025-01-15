@@ -1,6 +1,7 @@
 import asyncio
 from PyPDF2 import PdfReader
 from googletrans import Translator
+import re
 
 def read_pdf(file_path):
     with open(file_path, 'rb') as pdf_file:
@@ -9,7 +10,11 @@ def read_pdf(file_path):
         num_pages = len(reader.pages)
         for page_num in range(num_pages):
             page = reader.pages[page_num]
-            text += page.extract_text()
+            page_text = page.extract_text()
+            # 使用正则表达式将多个连续的非空行合并成一行
+            page_text = re.sub(r'([^\n\s].*?)\n(?=[^\n\s])', r'\1 ',page_text)
+            text+=page_text
+
     return text
 
 async def translate_chunk(translator, chunk, dest_language='zh-cn'):
@@ -18,13 +23,13 @@ async def translate_chunk(translator, chunk, dest_language='zh-cn'):
 
 async def translate_text(text, dest_language='zh-cn'):
     translator = Translator()
-    # 将文本分块
-    chunk_size = 2000  # 每个块的字符数，可以根据需要调整
+
+    chunk_size = 10000  # 每个块的字符数，可以根据需要调整
     chunks = [text[i:i + chunk_size] for i in range(0, len(text), chunk_size)]
-    
+
     # 异步翻译每个块
     translated_chunks = await asyncio.gather(*[translate_chunk(translator, chunk, dest_language) for chunk in chunks])
-    
+
     # 拼接翻译后的块
     translated_text = ''.join(translated_chunks)
     return translated_text
